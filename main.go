@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -35,11 +36,31 @@ func createBook(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newBook)
 }
 
+func bookById(c *gin.Context) {
+	id := c.Param("id") // "/books/2"
+	book, err := getBookById(id)
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Book not found."})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, book)
+}
+
+func getBookById(id string) (*book, error) {
+	for i, b := range books {
+		if b.ID == id {
+			return &books[i], nil
+		}
+	}
+	return nil, errors.New("book not found")
+}
+
 func main() {
 	log.Println("API started.")
 
 	router := gin.Default()
 	router.GET("/books", getBooks)
+	router.GET("/books/:id", bookById)
 	router.POST("/books", createBook)
 	router.Run("localhost:8080")
 }
